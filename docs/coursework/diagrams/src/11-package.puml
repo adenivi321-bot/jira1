@@ -1,0 +1,76 @@
+@startuml package
+title Диаграмма пакетов проекта TaskHub (монорепозиторий)
+skinparam shadowing false
+skinparam package {
+  BackgroundColor #F2F7FF
+  BorderColor #2F4858
+}
+
+package "taskhub (root)" {
+  package "apps" {
+    package "api (NestJS)" as api {
+      package "modules" {
+        [auth]
+        [users]
+        [tenants]
+        [projects]
+        [issues]
+        [search]
+        [notifications]
+        [mail]
+        [health]
+      }
+      package "entities" as ent {
+        [Tenant]
+        [User]
+        [Project]
+        [Sprint]
+        [Issue]
+        [IssueComment]
+        [IssueAttachment]
+        [IssueChangelog]
+        [Label]
+        [Notification]
+      }
+      package "middleware" {
+        [TenantMiddleware]
+      }
+      package "filters" {
+        [GlobalExceptionFilter]
+      }
+    }
+    package "web (React)" as web {
+      package "features" {
+        [auth]
+        [board]
+        [backlog]
+        [kanban]
+        [projects]
+        [members]
+        [notifications]
+        [search]
+        [settings]
+        [layout]
+        [landing]
+      }
+      package "components/ui" as ui
+      package "stores" as stores
+      package "api"     as webapi
+      package "lib"     as lib
+    }
+  }
+  package "packages" {
+    package "shared-types" as st
+    package "ui (UI Kit)"  as uikit
+  }
+  package "infrastructure" {
+    [postgres/init.sql]
+  }
+}
+
+api ..> st : <<use>>
+web ..> st : <<use>>
+web ..> uikit : <<use>>
+api ..> ent
+web ..> webapi
+@enduml

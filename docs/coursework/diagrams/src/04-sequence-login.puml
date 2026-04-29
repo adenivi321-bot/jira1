@@ -1,0 +1,35 @@
+@startuml sequence-login
+title Диаграмма последовательности: аутентификация пользователя
+skinparam shadowing false
+skinparam sequenceArrowColor #2F4858
+skinparam sequenceLifeLineBackgroundColor #F2F7FF
+
+actor "Пользователь" as U
+participant "Web-клиент\n(React)" as Web
+participant "AuthController" as Ctrl
+participant "AuthService" as Svc
+participant "UsersRepo\n(TypeORM)" as Repo
+database "PostgreSQL" as DB
+participant "JwtService" as JWT
+
+U -> Web : Ввод email + пароля
+Web -> Ctrl : POST /auth/login\n{email, password}
+Ctrl -> Svc : login(email, password)
+Svc -> Repo : findOneByEmail(email)
+Repo -> DB : SELECT * FROM users\nWHERE email = $1
+DB --> Repo : User row
+Repo --> Svc : User
+Svc -> Svc : bcrypt.compare(password, hash)
+alt Пароль неверный
+    Svc --> Ctrl : UnauthorizedException
+    Ctrl --> Web : 401 Unauthorized
+    Web --> U : Сообщение об ошибке
+else Пароль верный
+    Svc -> JWT : sign({sub, tenantId, role})
+    JWT --> Svc : accessToken
+    Svc --> Ctrl : { user, accessToken }
+    Ctrl --> Web : 200 OK + JWT
+    Web -> Web : сохранить в localStorage
+    Web --> U : Переход на /dashboard
+end
+@enduml

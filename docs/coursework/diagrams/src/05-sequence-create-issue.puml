@@ -1,0 +1,40 @@
+@startuml sequence-create-issue
+title Диаграмма последовательности: создание новой задачи
+skinparam shadowing false
+skinparam sequenceLifeLineBackgroundColor #F2F7FF
+
+actor "Разработчик" as Dev
+participant "Web-клиент" as Web
+participant "JwtAuthGuard" as Guard
+participant "TenantMiddleware" as TM
+participant "IssuesController" as Ctrl
+participant "IssuesService" as Svc
+participant "EventEmitter2" as Bus
+participant "IssuesGateway\n(WebSocket)" as WS
+participant "NotificationsService" as Notif
+database "PostgreSQL" as DB
+
+Dev -> Web : Заполняет форму\n«Создать задачу»
+Web -> TM : POST /api/projects/:id/issues\nHost: acme.app.localhost\nAuthorization: Bearer JWT
+TM -> TM : извлечь tenantId по slug
+TM -> Guard : forward
+Guard -> Guard : verify(JWT)
+Guard -> Ctrl : forward (req.user, req.tenantId)
+Ctrl -> Svc : create(projectId, tenantId, dto)
+Svc -> DB : SELECT MAX("order") ...
+DB --> Svc : maxOrder
+Svc -> DB : INSERT INTO issues ... RETURNING *
+DB --> Svc : Issue
+Svc -> Bus : emit(issue.created, payload)
+Svc --> Ctrl : Issue
+Ctrl --> Web : 201 Created + Issue
+Web --> Dev : Карточка появилась\nна доске
+
+== Асинхронная обработка ==
+Bus -> WS : on(issue.created)
+WS -> Web : ws emit issue:created
+Bus -> Notif : on(issue.created)
+Notif -> DB : INSERT INTO notifications
+Notif -> WS : ws emit notification:new
+
+@enduml

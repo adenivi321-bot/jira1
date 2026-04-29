@@ -1,0 +1,52 @@
+@startuml activity-issue
+title Диаграмма деятельности: жизненный цикл задачи
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F2F7FF
+  BorderColor #2F4858
+  ArrowColor #2F4858
+}
+
+start
+:Менеджер или разработчик\nсоздаёт задачу;
+:Задача попадает в BACKLOG;
+if (Назначить в спринт?) then (да)
+  :PM добавляет задачу в Sprint;
+  :Статус → TODO;
+else (нет)
+  :Задача остаётся в backlog;
+  stop
+endif
+
+:Разработчик берёт задачу в работу;
+:Статус → IN_PROGRESS;
+
+repeat
+  :Кодирование / тестирование;
+  if (Возникли вопросы?) then (да)
+    :Добавить комментарий;
+    :Уведомить участников;
+  endif
+repeat while (Не готово к ревью?) is (да)
+->нет;
+
+:Статус → IN_REVIEW;
+fork
+  :Ревьюер просматривает код;
+fork again
+  :QA проверяет реализацию;
+end fork
+
+if (Замечания?) then (да)
+  :Статус → IN_PROGRESS;
+  note right
+    Возврат на доработку
+  end note
+else (нет)
+  :Статус → DONE;
+  :Запись в IssueChangelog;
+  :Уведомление reporter;
+endif
+
+stop
+@enduml

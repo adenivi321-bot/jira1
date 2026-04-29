@@ -1,0 +1,68 @@
+@startuml use-case
+title Диаграмма вариантов использования системы TaskHub
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam ArrowColor #4A4A4A
+skinparam ActorBorderColor #2F4858
+skinparam UsecaseBorderColor #2F4858
+skinparam UsecaseBackgroundColor #F2F7FF
+
+actor "Администратор\n(ADMIN)" as Admin
+actor "Менеджер проекта\n(PROJECT_MANAGER)" as PM
+actor "Разработчик\n(DEVELOPER)" as Dev
+actor "Наблюдатель\n(VIEWER)" as Viewer
+actor "Внешняя система\nуведомлений" as Mailer
+
+rectangle "Система TaskHub" {
+  usecase "Регистрация\nи аутентификация" as UC_Auth
+  usecase "Управление\nтенантами" as UC_Tenant
+  usecase "Управление\nпользователями" as UC_Users
+  usecase "Управление\nпроектами" as UC_Project
+  usecase "Создание задачи" as UC_CreateIssue
+  usecase "Редактирование\nзадачи" as UC_EditIssue
+  usecase "Назначение\nисполнителя" as UC_Assign
+  usecase "Перемещение задачи\nна доске Kanban" as UC_Move
+  usecase "Комментирование\nзадачи" as UC_Comment
+  usecase "Прикрепление\nфайлов" as UC_Attach
+  usecase "Просмотр\nистории изменений" as UC_Changelog
+  usecase "Управление\nспринтами" as UC_Sprint
+  usecase "Полнотекстовый\nпоиск" as UC_Search
+  usecase "Получение\nуведомлений" as UC_Notify
+  usecase "Просмотр\nбэклога и доски" as UC_View
+}
+
+Admin --> UC_Auth
+Admin --> UC_Tenant
+Admin --> UC_Users
+Admin --> UC_Project
+PM --> UC_Auth
+PM --> UC_Project
+PM --> UC_Sprint
+PM --> UC_CreateIssue
+PM --> UC_EditIssue
+PM --> UC_Assign
+PM --> UC_View
+PM --> UC_Search
+Dev --> UC_Auth
+Dev --> UC_CreateIssue
+Dev --> UC_EditIssue
+Dev --> UC_Move
+Dev --> UC_Comment
+Dev --> UC_Attach
+Dev --> UC_Changelog
+Dev --> UC_Search
+Dev --> UC_Notify
+Dev --> UC_View
+Viewer --> UC_Auth
+Viewer --> UC_View
+Viewer --> UC_Search
+Viewer --> UC_Comment
+
+UC_Move ..> UC_Changelog : <<include>>
+UC_EditIssue ..> UC_Changelog : <<include>>
+UC_Assign ..> UC_Notify : <<include>>
+UC_Comment ..> UC_Notify : <<extend>>
+
+Mailer <-- UC_Notify
+@enduml

@@ -1,0 +1,52 @@
+@startuml deployment
+title Диаграмма развёртывания TaskHub (Docker Compose)
+skinparam shadowing false
+skinparam node {
+  BackgroundColor #F2F7FF
+  BorderColor #2F4858
+}
+
+actor "Конечный пользователь" as User
+
+node "Браузер" as Browser {
+  artifact "Web SPA\n(React + Vite, dist)" as SPA
+}
+
+cloud "Интернет / LAN" {
+}
+
+node "Хост Docker Engine" as Host {
+  node "Контейнер: traefik" as Traefik {
+    component "Reverse Proxy" as RP
+  }
+  node "Контейнер: web" as WebC {
+    artifact "nginx + dist" as Nginx
+  }
+  node "Контейнер: api" as ApiC {
+    artifact "NestJS 10\n(Node.js 20)" as Nest
+  }
+  node "Контейнер: postgres" as PgC {
+    database "PostgreSQL 16\n+ RLS" as Pg
+  }
+  node "Контейнер: redis" as RedisC {
+    database "Redis 7" as Redis
+  }
+  node "Контейнер: minio" as MinioC {
+    database "MinIO\n(S3-совместимое\nхранилище)" as MinioDb
+  }
+  node "Контейнер: adminer" as AdminerC {
+    component "Adminer (DB UI)" as Adminer
+  }
+}
+
+User --> Browser
+Browser ..> RP : HTTPS, WebSocket
+RP --> Nginx : app.localhost
+RP --> Nest : *.app.localhost,\napi.app.localhost
+RP --> MinioDb : storage.app.localhost
+RP --> Adminer : adminer.app.localhost
+Nest --> Pg : TCP 5432
+Nest --> Redis : TCP 6379
+Nest --> MinioDb : TCP 9000
+Nginx ..> Nest : REST + WS
+@enduml

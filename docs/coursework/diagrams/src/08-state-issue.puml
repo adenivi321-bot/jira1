@@ -1,0 +1,37 @@
+@startuml state-issue
+title Диаграмма состояний задачи (Issue)
+skinparam shadowing false
+skinparam state {
+  BackgroundColor #F2F7FF
+  BorderColor #2F4858
+}
+
+[*] --> BACKLOG : create()
+
+state BACKLOG : Задача оформлена,\nне запланирована
+state TODO : Задача попала в спринт,\nготова к выполнению
+state IN_PROGRESS : Назначен исполнитель,\nведётся работа
+state IN_REVIEW : Готова к проверке\n(code review / QA)
+state DONE : Задача выполнена\nи принята
+state CANCELLED : Задача отменена
+
+BACKLOG --> TODO : addToSprint()
+TODO --> IN_PROGRESS : start() / assign()
+IN_PROGRESS --> IN_REVIEW : submitForReview()
+IN_REVIEW --> IN_PROGRESS : changesRequested()
+IN_REVIEW --> DONE : approve()
+DONE --> IN_PROGRESS : reopen()
+
+BACKLOG --> CANCELLED : cancel()
+TODO --> CANCELLED : cancel()
+IN_PROGRESS --> CANCELLED : cancel()
+
+DONE --> [*]
+CANCELLED --> [*]
+
+note right of IN_PROGRESS
+  Каждый переход
+  фиксируется в
+  таблице issue_changelog
+end note
+@enduml

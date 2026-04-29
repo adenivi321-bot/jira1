@@ -1,0 +1,152 @@
+@startuml er
+title ER-диаграмма базы данных TaskHub (PostgreSQL 16)
+skinparam linetype ortho
+skinparam shadowing false
+hide circle
+hide methods
+
+entity "tenants" as tenants {
+  *id : uuid <<PK>>
+  --
+  *name : varchar(255)
+  *slug : varchar(63) <<UQ>>
+  *plan : plan_type
+  *created_at : timestamptz
+}
+
+entity "users" as users {
+  *id : uuid <<PK>>
+  --
+  *tenant_id : uuid <<FK>>
+  *email : varchar(255)
+  *password_hash : varchar(255)
+  full_name : varchar(255)
+  *role : user_role
+  avatar_url : varchar(512)
+  *created_at : timestamptz
+}
+
+entity "projects" as projects {
+  *id : uuid <<PK>>
+  --
+  *tenant_id : uuid <<FK>>
+  *name : varchar(255)
+  *key : varchar(10)
+  description : text
+  *board_type : board_type
+}
+
+entity "board_columns" as columns {
+  *id : uuid <<PK>>
+  --
+  *project_id : uuid <<FK>>
+  *name : varchar(100)
+  *order : int
+  color : varchar(7)
+  status_key : varchar(100)
+}
+
+entity "sprints" as sprints {
+  *id : uuid <<PK>>
+  --
+  *project_id : uuid <<FK>>
+  *name : varchar(255)
+  goal : text
+  start_date : date
+  end_date : date
+  *status : sprint_status
+}
+
+entity "issues" as issues {
+  *id : uuid <<PK>>
+  --
+  *tenant_id : uuid <<FK>>
+  *project_id : uuid <<FK>>
+  sprint_id : uuid <<FK>>
+  parent_id : uuid <<FK>>
+  *title : varchar(500)
+  description : text
+  *status : varchar(100)
+  *priority : issue_priority
+  assignee_id : uuid <<FK>>
+  *reporter_id : uuid <<FK>>
+  story_points : int
+  due_date : date
+  *order : double
+  search_vector : tsvector
+  *created_at : timestamptz
+  *updated_at : timestamptz
+}
+
+entity "issue_comments" as comments {
+  *id : uuid <<PK>>
+  --
+  *issue_id : uuid <<FK>>
+  *user_id : uuid <<FK>>
+  *body : text
+  *created_at : timestamptz
+}
+
+entity "issue_attachments" as attachments {
+  *id : uuid <<PK>>
+  --
+  *issue_id : uuid <<FK>>
+  *user_id : uuid <<FK>>
+  *filename : varchar(255)
+  *url : varchar(512)
+  *size : bigint
+}
+
+entity "issue_changelog" as changelog {
+  *id : uuid <<PK>>
+  --
+  *issue_id : uuid <<FK>>
+  *user_id : uuid <<FK>>
+  *field : varchar(100)
+  old_value : text
+  new_value : text
+  *created_at : timestamptz
+}
+
+entity "labels" as labels {
+  *id : uuid <<PK>>
+  --
+  *tenant_id : uuid <<FK>>
+  *name : varchar(100)
+  color : varchar(7)
+}
+
+entity "issue_labels" as ilabels {
+  *issue_id : uuid <<PK,FK>>
+  *label_id : uuid <<PK,FK>>
+}
+
+entity "notifications" as notif {
+  *id : uuid <<PK>>
+  --
+  *user_id : uuid <<FK>>
+  *tenant_id : uuid <<FK>>
+  *type : notification_type
+  *payload : jsonb
+  *read : boolean
+  *created_at : timestamptz
+}
+
+tenants ||--o{ users
+tenants ||--o{ projects
+tenants ||--o{ labels
+tenants ||--o{ notif
+projects ||--o{ columns
+projects ||--o{ sprints
+projects ||--o{ issues
+sprints |o--o{ issues
+issues ||--o{ comments
+issues ||--o{ attachments
+issues ||--o{ changelog
+issues ||--o{ ilabels
+labels ||--o{ ilabels
+issues |o--o{ issues
+users ||--o{ comments
+users ||--o{ notif
+users ||--o{ issues
+@enduml
