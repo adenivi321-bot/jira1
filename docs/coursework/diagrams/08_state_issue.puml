@@ -1,0 +1,32 @@
+@startuml state_issue
+' State Machine — Issue statuses
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+
+title Диаграмма состояний — Статусы задачи (Issue)
+
+[*] --> BACKLOG : create()
+
+BACKLOG : задача создана\nи находится в бэклоге
+TODO : запланирована к исполнению
+IN_PROGRESS : выполняется разработчиком
+IN_REVIEW : находится на код-ревью / QA
+DONE : выполнена и принята
+
+BACKLOG     --> TODO        : запланировать
+TODO        --> IN_PROGRESS : взять в работу
+IN_PROGRESS --> IN_REVIEW   : отправить на ревью
+IN_REVIEW   --> DONE        : принять
+IN_REVIEW   --> IN_PROGRESS : вернуть на доработку
+TODO        --> BACKLOG     : деприоритизировать
+IN_PROGRESS --> TODO        : приостановить
+DONE        --> [*]         : закрыть
+
+note right of IN_REVIEW
+  Любой переход порождает запись
+  в issue_changelog и WS-событие
+  ISSUE_STATUS_CHANGED
+end note
+
+@enduml

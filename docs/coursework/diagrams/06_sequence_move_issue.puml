@@ -1,0 +1,47 @@
+@startuml sequence_move_issue
+' Sequence Diagram — Drag-and-drop on Kanban: move issue between columns
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #1F4E79
+  ParticipantBorderColor #1F4E79
+  ParticipantBackgroundColor #E8F1FA
+  LifeLineBorderColor #1F4E79
+}
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+autonumber
+
+title Диаграмма последовательности — Перетаскивание задачи (Drag-and-Drop) на Kanban-доске
+
+actor "Пользователь" as U
+participant "KanbanBoard\n(@dnd-kit)" as DnD
+participant "useBoardDnd" as Hook
+participant "IssuesController" as IC
+participant "IssuesService" as IS
+participant "EventEmitter2" as EE
+participant "IssuesGateway" as GW
+participant "PostgreSQL" as DB
+
+U   -> DnD : drop карточки в новую колонку
+DnD -> Hook : onDragEnd(active, over)
+Hook -> Hook : вычислить newOrder (между соседями)
+Hook -> Hook : optimistic update в TanStack Query
+Hook -> IC  : PATCH /issues/:id/order {newStatus,newOrder}
+IC  -> IS  : move(id, userId, dto, tenantId)
+IS  -> DB  : BEGIN
+IS  -> DB  : UPDATE issues SET status,"order"
+IS  -> DB  : COUNT соседей (|order-newOrder|<threshold)
+alt порядок плотный — нужна перебалансировка
+  IS -> DB : SELECT issues ORDER BY "order"
+  IS -> DB : UPDATE … FROM (VALUES (id, idx*1.0))
+end
+IS  -> DB  : COMMIT
+IS  -> EE  : emit ISSUE_MOVED
+IS  --> IC : updated issue
+IC  --> Hook : 200 OK
+
+EE  -> GW  : @OnEvent(ISSUE_MOVED)
+GW  -> "Все зрители\nпроекта" as VS : ws "issue:moved"
+VS  -> VS  : синхронизировать позицию карточки
+
+@enduml

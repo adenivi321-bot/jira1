@@ -1,0 +1,78 @@
+@startuml deployment
+' Deployment Diagram — Docker Compose stack
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+
+title Диаграмма развёртывания TaskHub (Docker Compose)
+
+node "Машина пользователя\n(Workstation)" as Client {
+  artifact "Браузер Chrome / Firefox" as Browser
+}
+
+cloud "Интернет" as INet
+
+node "Сервер развёртывания\n(хост Docker)" as Host {
+
+  node "Docker network: jira-net" as Net {
+
+    node "container: traefik" as Traefik {
+      artifact "Traefik :80, :8080"
+    }
+
+    node "container: web" as Web {
+      artifact "Vite dev server :5173"
+      artifact "React SPA"
+    }
+
+    node "container: api" as API {
+      artifact "Node.js 20"
+      artifact "NestJS app :3000"
+    }
+
+    node "container: postgres" as PG {
+      database "PostgreSQL 16 :5432"
+      artifact "init.sql + RLS"
+    }
+
+    node "container: redis" as RD {
+      database "Redis 7 :6379"
+    }
+
+    node "container: minio" as MN {
+      artifact "MinIO :9000 (S3 API)"
+      artifact "MinIO Console :9001"
+    }
+
+    node "container: adminer" as Adm {
+      artifact "Adminer :8080"
+    }
+  }
+
+  folder "Volumes" as Vol {
+    artifact "postgres-data"
+    artifact "redis-data"
+    artifact "minio-data"
+  }
+}
+
+cloud "YooKassa API"   as YK
+cloud "SMTP-сервер"    as SMTP
+
+Browser --> INet
+INet    --> Traefik   : 80 / 443
+Traefik --> Web       : app.localhost
+Traefik --> API       : *.app.localhost
+Traefik --> Adm       : adminer.app.localhost
+Traefik --> MN        : minio.app.localhost / storage.app.localhost
+API     --> PG        : 5432
+API     --> RD        : 6379
+API     --> MN        : 9000
+API     --> YK        : HTTPS
+API     --> SMTP      : 587 STARTTLS
+
+PG  --> Vol : persist
+RD  --> Vol : persist
+MN  --> Vol : persist
+
+@enduml

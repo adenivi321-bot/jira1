@@ -1,0 +1,105 @@
+@startuml use_case
+' UML Use Case Diagram — TaskHub (Jira-like) task management system
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #1F4E79
+  ArrowColor #1F4E79
+}
+skinparam actor {
+  BackgroundColor #E8F1FA
+  BorderColor #1F4E79
+}
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+left to right direction
+
+title Диаграмма вариантов использования системы управления задачами TaskHub
+
+actor "Гость" as Guest
+actor "Администратор\nорганизации" as Admin
+actor "Менеджер\nпроекта" as PM
+actor "Разработчик" as Dev
+actor "Наблюдатель" as Viewer
+actor "Платёжный шлюз\n(YooKassa)" as Pay
+actor "SMTP-сервер" as SMTP
+
+rectangle "TaskHub" {
+  usecase "Зарегистрировать\nорганизацию"          as UC_Reg
+  usecase "Войти в систему"                       as UC_Login
+  usecase "Выйти из системы"                      as UC_Logout
+  usecase "Управлять учётной\nзаписью"            as UC_Profile
+  usecase "Пригласить участников"                 as UC_Invite
+  usecase "Управлять ролями"                      as UC_Roles
+  usecase "Управлять тарифным\nпланом"            as UC_Billing
+  usecase "Создать проект"                        as UC_NewProj
+  usecase "Настроить колонки\nдоски"              as UC_Cols
+  usecase "Управлять спринтами"                   as UC_Sprint
+  usecase "Создать задачу"                        as UC_NewIssue
+  usecase "Просмотреть\nKanban-доску"             as UC_Board
+  usecase "Просмотреть\nбэклог"                   as UC_Backlog
+  usecase "Перетащить\nзадачу (DnD)"              as UC_Move
+  usecase "Назначить\nисполнителя"                as UC_Assign
+  usecase "Изменить статус,\nприоритет, срок"     as UC_Update
+  usecase "Прокомментировать\nзадачу"             as UC_Comment
+  usecase "Прикрепить файл"                       as UC_Attach
+  usecase "Удалить задачу"                        as UC_Delete
+  usecase "Получать\nуведомления"                 as UC_Notif
+  usecase "Глобальный поиск"                      as UC_Search
+  usecase "Просмотр истории\nизменений"           as UC_History
+}
+
+' Базовые связи
+Guest    --> UC_Reg
+Guest    --> UC_Login
+
+Viewer   --> UC_Login
+Viewer   --> UC_Board
+Viewer   --> UC_Backlog
+Viewer   --> UC_Search
+Viewer   --> UC_Notif
+Viewer   --> UC_Profile
+
+Dev      --> UC_Login
+Dev      --> UC_Profile
+Dev      --> UC_Board
+Dev      --> UC_Backlog
+Dev      --> UC_NewIssue
+Dev      --> UC_Update
+Dev      --> UC_Move
+Dev      --> UC_Comment
+Dev      --> UC_Attach
+Dev      --> UC_Search
+Dev      --> UC_Notif
+Dev      --> UC_History
+Dev      --> UC_Logout
+
+PM       --> UC_NewProj
+PM       --> UC_Cols
+PM       --> UC_Sprint
+PM       --> UC_Assign
+PM       --> UC_Invite
+PM       --> UC_Delete
+
+Admin    --> UC_Invite
+Admin    --> UC_Roles
+Admin    --> UC_Billing
+Admin    --> UC_Delete
+
+' Внешние системы
+UC_Billing ..> Pay  : <<uses>>
+UC_Notif   ..> SMTP : <<uses>>
+
+' Включение/расширение
+UC_NewIssue ..> UC_Notif : <<extend>>
+UC_Move     ..> UC_Notif : <<extend>>
+UC_Assign   ..> UC_Notif : <<extend>>
+UC_Comment  ..> UC_Notif : <<extend>>
+UC_Update   ..> UC_History : <<include>>
+
+' Иерархия ролей (наследование)
+Admin --|> PM
+PM    --|> Dev
+Dev   --|> Viewer
+
+@enduml

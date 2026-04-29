@@ -1,0 +1,90 @@
+@startuml component
+' Component Diagram — Architecture of TaskHub
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #1F4E79
+}
+
+title Диаграмма компонентов системы TaskHub
+
+package "Клиент" {
+  [Браузер пользователя] as Browser
+}
+
+package "Edge" {
+  [Traefik\nReverse Proxy] as Traefik
+}
+
+package "Frontend (apps/web)" {
+  [React SPA\n(Vite + TS)] as Web
+  [TanStack Query] as TQ
+  [Zustand stores] as ZS
+  [Socket.IO Client] as WSC
+  Web --> TQ
+  Web --> ZS
+  Web --> WSC
+}
+
+package "Backend (apps/api)\nNestJS Modular Monolith" {
+  [AuthModule]          as MAuth
+  [TenantsModule]       as MTen
+  [UsersModule]         as MUsr
+  [ProjectsModule]      as MPrj
+  [IssuesModule]        as MIss
+  [SearchModule]        as MSrch
+  [NotificationsModule] as MNot
+  [BillingModule]       as MBil
+  [MailModule]          as MMail
+  [HealthModule]        as MHlth
+  [TenantMiddleware]    as MID
+  [JwtAuthGuard\nRolesGuard\nPlanGuard] as Guards
+  [IssuesGateway\n(Socket.IO)] as GW
+  [GlobalExceptionFilter] as Filter
+}
+
+package "Shared packages" {
+  [shared-types\n(Zod schemas)] as Shared
+  [ui\n(reusable components)] as UI
+}
+
+database "PostgreSQL 16\n(RLS + pg_trgm + tsvector)" as PG
+database "Redis 7\n(refresh tokens, cache)" as RD
+node     "MinIO (S3-совместимое\nобъектное хранилище)" as MN
+cloud    "YooKassa\nплатёжный шлюз" as YK
+cloud    "SMTP\nсервер" as SMTP
+
+Browser  --> Traefik     : HTTPS
+Traefik  --> Web         : app.localhost
+Traefik  --> MAuth       : api.app.localhost\n*.app.localhost
+Web      --> Traefik     : REST + WS
+
+Traefik  --> GW          : /ws
+WSC      --> Traefik
+
+MID      ..> Guards
+Guards   ..> MAuth
+
+MAuth    ..> RD
+MAuth    ..> PG
+MTen     ..> PG
+MUsr     ..> PG
+MUsr     ..> MN          : presigned URLs
+MPrj     ..> PG
+MIss     ..> PG
+MIss     ..> GW          : EventEmitter
+MSrch    ..> PG          : tsvector + pg_trgm
+MNot     ..> PG
+MNot     ..> GW
+MNot     ..> MMail
+MMail    ..> SMTP
+MBil     ..> YK
+
+MAuth ..> Shared
+MIss  ..> Shared
+Web   ..> Shared
+Web   ..> UI
+
+@enduml

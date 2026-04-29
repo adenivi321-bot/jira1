@@ -1,0 +1,47 @@
+@startuml sequence_login
+' Sequence Diagram — Login flow with JWT issuance and refresh-token rotation
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #1F4E79
+  ParticipantBorderColor #1F4E79
+  ParticipantBackgroundColor #E8F1FA
+  LifeLineBorderColor #1F4E79
+}
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+autonumber
+
+title Диаграмма последовательности — Аутентификация пользователя (JWT)
+
+actor Пользователь as U
+participant "React SPA\n(LoginPage)" as Web
+participant "Traefik\n(reverse proxy)" as Tr
+participant "TenantMiddleware" as TM
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "PostgreSQL\n(users)" as DB
+participant "Redis\n(refresh-tokens)" as R
+
+U  -> Web : Ввод email и пароля
+Web -> Tr : POST /api/auth/login {email,password}
+Tr  -> TM : запрос с Host = acme.app.localhost
+TM  -> TM : разбор поддомена → tenantId
+TM  -> AC : forward + req.tenantId
+AC  -> AS : login(email, password, tenantId)
+AS  -> DB : SELECT user WHERE email AND tenantId
+DB  --> AS : user{passwordHash}
+AS  -> AS : bcrypt.compare(pwd, hash)
+alt пароль валиден
+  AS  -> AS : generateTokens()
+  AS  -> R  : SET refresh:userId:tokenId TTL=7d
+  AS  --> AC : {accessToken, refreshToken, user}
+  AC  --> Web : 200 OK + tokens
+  Web -> Web : сохранить токены в zustand store
+  Web --> U : переход в /projects
+else пароль неверный
+  AS  --> AC : UnauthorizedException
+  AC  --> Web : 401 "Invalid credentials"
+  Web --> U : сообщение об ошибке
+end
+
+@enduml
