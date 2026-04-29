@@ -1,0 +1,84 @@
+@startuml component
+title Диаграмма компонентов системы TaskHub
+skinparam shadowing false
+skinparam componentStyle uml2
+skinparam component {
+  BackgroundColor #F2F7FF
+  BorderColor #2F4858
+}
+
+package "Клиентская часть" {
+  [Web SPA\n(React 18 + Vite)] as Web
+  [UI Kit\n(shadcn/ui, Tailwind)] as UIKit
+  [State Store\n(Zustand)] as Store
+  [API Client\n(axios + Zod)] as Api
+}
+
+package "Серверная часть (NestJS 10)" {
+  [AuthModule] as Auth
+  [TenantsModule] as Tenants
+  [UsersModule] as Users
+  [ProjectsModule] as Projects
+  [IssuesModule] as Issues
+  [SearchModule] as Search
+  [NotificationsModule] as Notif
+  [MailModule] as Mail
+  [HealthModule] as Health
+  [TenantMiddleware] as TM
+  [GlobalExceptionFilter] as Filter
+  [JwtAuthGuard] as Guard
+  [WebSocket Gateway] as WS
+}
+
+package "Общий код" {
+  [shared-types\n(Zod + TS)] as Shared
+}
+
+cloud "Внешние сервисы" {
+  [SMTP-сервер] as SMTP
+  [ЮKassa\n(биллинг)] as Pay
+}
+
+database "PostgreSQL 16" as PG
+database "Redis 7" as Redis
+database "MinIO (S3)" as Minio
+
+Web --> UIKit
+Web --> Store
+Web --> Api
+Web --> Shared
+Api --> TM : HTTP/REST
+Web --> WS : WebSocket
+
+TM --> Guard
+Guard --> Filter
+Filter --> Auth
+Filter --> Issues
+Filter --> Projects
+Filter --> Users
+Filter --> Tenants
+Filter --> Search
+Filter --> Notif
+Filter --> Health
+
+Auth --> Users
+Issues --> Notif
+Issues --> WS
+Projects --> Issues
+Notif --> Mail
+Mail --> SMTP
+
+Auth --> PG
+Users --> PG
+Projects --> PG
+Issues --> PG
+Search --> PG
+Notif --> PG
+Tenants --> PG
+Issues --> Minio : файлы
+Auth --> Redis : sessions
+Notif --> Redis : pub/sub
+Tenants --> Pay
+Shared <.. Issues : Zod-схемы
+Shared <.. Auth
+@enduml

@@ -1,0 +1,39 @@
+@startuml sequence-move-issue
+title Диаграмма последовательности: перемещение задачи на доске Kanban (drag & drop)
+skinparam shadowing false
+skinparam sequenceLifeLineBackgroundColor #F2F7FF
+
+actor "Разработчик" as Dev
+participant "BoardView\n(React + dnd-kit)" as Board
+participant "useBoardStore\n(Zustand)" as Store
+participant "IssuesController" as Ctrl
+participant "IssuesService" as Svc
+database "PostgreSQL" as DB
+participant "EventBus" as Bus
+participant "IssuesGateway" as WS
+participant "Другие клиенты" as Others
+
+Dev -> Board : drag задачу IS-12\nиз TODO в IN_PROGRESS
+Board -> Store : optimisticMove(IS-12, newStatus, newOrder)
+Store --> Board : сразу обновлённое UI
+Board -> Ctrl : PATCH /issues/IS-12/move\n{newStatus, newOrder}
+Ctrl -> Svc : move(issueId, userId, dto, tenantId)
+Svc -> DB : BEGIN
+Svc -> DB : SELECT issue WHERE id = ?
+Svc -> DB : UPDATE issues SET status, "order"
+Svc -> DB : SELECT count соседей\nABS(order - new) < threshold
+alt Требуется ребаланс
+    Svc -> DB : UPDATE ... FROM (VALUES ...)\n— ребаланс колонки
+end
+Svc -> DB : COMMIT
+Svc -> Bus : emit(issue.moved)
+Svc --> Ctrl : Issue
+Ctrl --> Board : 200 OK
+Bus -> WS : on(issue.moved)
+WS -> Others : ws emit issue:moved
+note over Others
+  Все подключённые клиенты
+  обновляют доску в реальном
+  времени без перезагрузки
+end note
+@enduml

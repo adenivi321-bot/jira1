@@ -1,0 +1,166 @@
+@startuml class
+title Диаграмма классов предметной области TaskHub
+skinparam classBackgroundColor #FAFCFF
+skinparam classBorderColor #2F4858
+skinparam shadowing false
+hide empty members
+left to right direction
+
+enum UserRole {
+  ADMIN
+  PROJECT_MANAGER
+  DEVELOPER
+  VIEWER
+}
+
+enum IssueStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum IssuePriority {
+  LOWEST
+  LOW
+  MEDIUM
+  HIGH
+  HIGHEST
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+enum BoardType {
+  KANBAN
+  SCRUM
+}
+
+class Tenant {
+  +id: UUID
+  +name: string
+  +slug: string
+  +plan: PlanType
+  +createdAt: DateTime
+}
+
+class User {
+  +id: UUID
+  +email: string
+  +passwordHash: string
+  +fullName: string
+  +role: UserRole
+  +avatarUrl: string
+  --
+  +login(): JwtToken
+  +changeRole(role): void
+}
+
+class Project {
+  +id: UUID
+  +name: string
+  +key: string
+  +description: string
+  +boardType: BoardType
+  --
+  +addColumn(): BoardColumn
+}
+
+class BoardColumn {
+  +id: UUID
+  +name: string
+  +order: int
+  +color: string
+  +statusKey: string
+}
+
+class Sprint {
+  +id: UUID
+  +name: string
+  +goal: string
+  +startDate: Date
+  +endDate: Date
+  +status: SprintStatus
+  --
+  +start(): void
+  +complete(): void
+}
+
+class Issue {
+  +id: UUID
+  +title: string
+  +description: string
+  +status: IssueStatus
+  +priority: IssuePriority
+  +storyPoints: int
+  +dueDate: Date
+  +order: double
+  --
+  +assignTo(user): void
+  +moveTo(status, order): void
+  +addComment(body): IssueComment
+}
+
+class IssueComment {
+  +id: UUID
+  +body: string
+  +createdAt: DateTime
+}
+
+class IssueAttachment {
+  +id: UUID
+  +filename: string
+  +url: string
+  +size: long
+  +createdAt: DateTime
+}
+
+class IssueChangelog {
+  +id: UUID
+  +field: string
+  +oldValue: string
+  +newValue: string
+  +createdAt: DateTime
+}
+
+class Label {
+  +id: UUID
+  +name: string
+  +color: string
+}
+
+class Notification {
+  +id: UUID
+  +type: NotificationType
+  +payload: JSON
+  +read: boolean
+  +createdAt: DateTime
+}
+
+Tenant "1" o-- "*" User : содержит >
+Tenant "1" o-- "*" Project : владеет >
+Tenant "1" o-- "*" Label
+Project "1" *-- "*" BoardColumn : имеет >
+Project "1" *-- "*" Sprint
+Project "1" *-- "*" Issue
+Sprint "0..1" o-- "*" Issue : содержит >
+Issue "1" *-- "*" IssueComment
+Issue "1" *-- "*" IssueAttachment
+Issue "1" *-- "*" IssueChangelog
+Issue "*" -- "*" Label : (issue_labels)
+Issue "0..1" o-- "*" Issue : parent / sub-task
+User "1" -- "*" Issue : reporter >
+User "0..1" -- "*" Issue : assignee >
+User "1" -- "*" IssueComment : автор >
+User "1" -- "*" Notification
+
+User -- UserRole
+Issue -- IssueStatus
+Issue -- IssuePriority
+Sprint -- SprintStatus
+Project -- BoardType
+@enduml
