@@ -1,0 +1,56 @@
+@startuml activity_issue_lifecycle
+' Activity Diagram — Issue lifecycle in TaskHub
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+
+title Диаграмма деятельности — Жизненный цикл задачи
+
+|Reporter|
+start
+:Сформулировать постановку;
+:Создать задачу
+(POST /projects/:pid/issues);
+note right
+status = BACKLOG
+priority = MEDIUM
+end note
+
+|Project Manager|
+:Поместить задачу в спринт
+или оставить в backlog;
+if (Спринт активен?) then (да)
+  :Передать задачу в TODO;
+else (нет)
+  :Запланировать в будущий спринт;
+endif
+
+|Developer|
+:Взять задачу
+(переместить в IN_PROGRESS);
+repeat
+  :Реализовать функционал;
+  :Зафиксировать прогресс
+   (комментарии, вложения);
+repeat while (Задача завершена?) is (нет)
+->да;
+:Перевести в IN_REVIEW;
+
+|Reviewer / QA|
+if (Код-ревью прошло?) then (да)
+  :Перевести в DONE;
+else (нет)
+  :Оставить комментарий
+   с замечаниями;
+  -[#red]-> возврат на доработку;
+  detach
+endif
+
+|System|
+:Зафиксировать
+изменения в changelog;
+:Разослать уведомления
+(WS + email);
+
+stop
+@enduml

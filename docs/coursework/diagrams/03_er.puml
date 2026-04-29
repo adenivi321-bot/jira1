@@ -1,0 +1,171 @@
+@startuml er
+' ER-Diagram — physical schema of PostgreSQL database
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+hide circle
+
+title ER-диаграмма базы данных TaskHub (PostgreSQL 16, RLS)
+
+entity tenants {
+  * id : UUID <<PK>>
+  --
+  name : VARCHAR(255)
+  slug : VARCHAR(63) UNIQUE
+  plan : plan_type
+  created_at : TIMESTAMPTZ
+}
+
+entity users {
+  * id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK>>
+  email : VARCHAR(255)
+  password_hash : VARCHAR(255)
+  full_name : VARCHAR(255)
+  role : user_role
+  avatar_url : VARCHAR(512)
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  --
+  UNIQUE (tenant_id, email)
+}
+
+entity projects {
+  * id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK>>
+  name : VARCHAR(255)
+  key : VARCHAR(10)
+  description : TEXT
+  board_type : board_type
+  created_at : TIMESTAMPTZ
+  --
+  UNIQUE (tenant_id, key)
+}
+
+entity board_columns {
+  * id : UUID <<PK>>
+  --
+  project_id : UUID <<FK>>
+  name : VARCHAR(100)
+  "order" : INT
+  color : VARCHAR(7)
+  status_key : VARCHAR(100)
+}
+
+entity sprints {
+  * id : UUID <<PK>>
+  --
+  project_id : UUID <<FK>>
+  name : VARCHAR(255)
+  goal : TEXT
+  start_date : DATE
+  end_date : DATE
+  status : sprint_status
+  created_at : TIMESTAMPTZ
+}
+
+entity issues {
+  * id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK>>
+  project_id : UUID <<FK>>
+  sprint_id : UUID <<FK>>
+  parent_id : UUID <<FK>>
+  title : VARCHAR(500)
+  description : TEXT
+  status : VARCHAR(100)
+  priority : issue_priority
+  assignee_id : UUID <<FK>>
+  reporter_id : UUID <<FK>>
+  story_points : INT
+  due_date : DATE
+  "order" : DOUBLE PRECISION
+  search_vector : TSVECTOR
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+entity issue_comments {
+  * id : UUID <<PK>>
+  --
+  issue_id : UUID <<FK>>
+  user_id : UUID <<FK>>
+  body : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+entity issue_attachments {
+  * id : UUID <<PK>>
+  --
+  issue_id : UUID <<FK>>
+  user_id : UUID <<FK>>
+  filename : VARCHAR(255)
+  url : VARCHAR(512)
+  size : BIGINT
+  created_at : TIMESTAMPTZ
+}
+
+entity issue_changelog {
+  * id : UUID <<PK>>
+  --
+  issue_id : UUID <<FK>>
+  user_id : UUID <<FK>>
+  field : VARCHAR(100)
+  old_value : TEXT
+  new_value : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+entity labels {
+  * id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK>>
+  name : VARCHAR(100)
+  color : VARCHAR(7)
+}
+
+entity issue_labels {
+  * issue_id : UUID <<PK,FK>>
+  * label_id : UUID <<PK,FK>>
+}
+
+entity notifications {
+  * id : UUID <<PK>>
+  --
+  user_id : UUID <<FK>>
+  tenant_id : UUID <<FK>>
+  type : notification_type
+  payload : JSONB
+  read : BOOLEAN
+  created_at : TIMESTAMPTZ
+}
+
+tenants ||--o{ users
+tenants ||--o{ projects
+tenants ||--o{ labels
+tenants ||--o{ notifications
+
+projects ||--o{ board_columns
+projects ||--o{ sprints
+projects ||--o{ issues
+
+sprints ||--o{ issues
+
+issues ||--o{ issue_comments
+issues ||--o{ issue_attachments
+issues ||--o{ issue_changelog
+issues ||--o{ issue_labels
+labels ||--o{ issue_labels
+issues ||--o{ issues : parent_id
+
+users  ||--o{ issues : reporter
+users  ||--o{ issues : assignee
+users  ||--o{ issue_comments
+users  ||--o{ issue_attachments
+users  ||--o{ issue_changelog
+users  ||--o{ notifications
+
+@enduml

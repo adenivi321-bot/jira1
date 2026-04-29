@@ -1,0 +1,14 @@
+@startuml state_sprint
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+
+title Диаграмма состояний — Жизненный цикл спринта
+
+[*] --> PLANNED : create()
+PLANNED   --> ACTIVE    : start()\n[start_date <= now]
+ACTIVE    --> COMPLETED : complete()\n[end_date >= now]
+ACTIVE    --> ACTIVE    : продление end_date
+COMPLETED --> [*]
+PLANNED   --> [*]       : delete()
+@enduml

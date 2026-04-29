@@ -1,0 +1,60 @@
+@startuml sequence_create_issue
+' Sequence Diagram — Create issue + WebSocket broadcast + notification
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #1F4E79
+  ParticipantBorderColor #1F4E79
+  ParticipantBackgroundColor #E8F1FA
+  LifeLineBorderColor #1F4E79
+}
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+autonumber
+
+title Диаграмма последовательности — Создание задачи и оповещение
+
+actor "Автор\n(reporter)" as U
+participant "React UI\n(BoardPage)" as Web
+participant "JwtAuthGuard" as JG
+participant "PlanGuard" as PG
+participant "IssuesController" as IC
+participant "IssuesService" as IS
+participant "EventEmitter2" as EE
+participant "IssuesGateway\n(Socket.IO)" as GW
+participant "NotificationsService" as NS
+participant "MailService" as MS
+participant "PostgreSQL" as DB
+database     "MinIO/S3" as S3
+
+U   -> Web : Заполняет форму "Новая задача"
+Web -> IC  : POST /projects/:pid/issues
+IC  -> JG  : verify access token
+JG  --> IC : ok, user
+IC  -> PG  : checkPlanLimit('issues')
+PG  --> IC : ok
+IC  -> IS  : create(projectId, tenantId, reporterId, dto)
+IS  -> DB  : SELECT MAX("order") в колонке status
+DB  --> IS : maxOrder
+IS  -> DB  : INSERT INTO issues
+DB  --> IS : saved issue
+IS  -> EE  : emit ISSUE_CREATED
+IS  --> IC : issue
+IC  --> Web: 201 Created + issue
+Web -> Web : invalidate kanban cache, render card
+
+par Параллельная обработка события
+  EE -> GW : @OnEvent(ISSUE_CREATED)
+  GW -> Web : ws-event "issue:created"
+  Web -> Web : вставить карточку в реальном времени всем зрителям доски
+end
+par
+  EE -> NS : @OnEvent(ISSUE_CREATED)
+  alt assigneeId задан и != reporterId
+    NS -> DB : INSERT INTO notifications
+    NS -> GW : emitToUser(assigneeId,'notification:new')
+    NS -> MS : sendNotificationEmail()
+    MS -> "SMTP" as SMTP : SMTP send mail
+  end
+end
+
+@enduml

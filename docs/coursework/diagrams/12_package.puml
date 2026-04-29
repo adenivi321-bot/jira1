@@ -1,0 +1,95 @@
+@startuml package
+' Package Diagram — module structure of NestJS API
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+
+title Диаграмма пакетов — модульная структура NestJS API
+
+package "AppModule (root)" as App {
+
+  package "Cross-cutting" as Cross {
+    component "ConfigModule (Joi)" as Cfg
+    component "TypeOrmModule"      as TOR
+    component "RedisModule"        as Rd
+    component "EventEmitterModule" as EE
+    component "TenantMiddleware"   as TM
+    component "JwtAuthGuard"       as G1
+    component "RolesGuard"         as G2
+    component "PlanGuard"          as G3
+    component "GlobalExceptionFilter" as Filt
+  }
+
+  package "Feature modules" as Feat {
+    package "AuthModule" as Auth {
+      [AuthController]
+      [AuthService]
+      [JwtStrategy]
+    }
+    package "TenantsModule" as Ten {
+      [TenantsController]
+      [TenantsService]
+    }
+    package "UsersModule" as Usr {
+      [UsersController]
+      [UsersService]
+      [MinioService]
+    }
+    package "ProjectsModule" as Prj {
+      [ProjectsController]
+      [ProjectsService]
+      [SprintsService]
+    }
+    package "IssuesModule" as Iss {
+      [IssuesController]
+      [IssuesService]
+      [IssuesGateway]
+    }
+    package "SearchModule" as Srch {
+      [SearchController]
+      [SearchService]
+    }
+    package "NotificationsModule" as Notif {
+      [NotificationsController]
+      [NotificationsService]
+    }
+    package "MailModule" as Mail {
+      [MailService]
+    }
+    package "BillingModule" as Bil {
+      [PaymentsController]
+      [PaymentsService]
+      [PlanLimitsService]
+    }
+    package "HealthModule" as Hlth {
+      [HealthController]
+      [HealthService]
+    }
+  }
+
+  package "Domain entities (TypeORM)" as Ent {
+    [TenantEntity]
+    [UserEntity]
+    [ProjectEntity]
+    [BoardColumnEntity]
+    [SprintEntity]
+    [IssueEntity]
+    [IssueCommentEntity]
+    [IssueAttachmentEntity]
+    [IssueChangelogEntity]
+    [LabelEntity]
+    [NotificationEntity]
+  }
+}
+
+Auth  ..> Ent
+Ten   ..> Ent
+Usr   ..> Ent
+Prj   ..> Ent
+Iss   ..> Ent
+Notif ..> Ent
+Notif ..> Iss   : использует Gateway
+Notif ..> Mail
+Bil   ..> Ent
+
+@enduml
