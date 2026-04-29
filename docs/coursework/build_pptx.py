@@ -127,6 +127,295 @@ def _content_area(slide):
 # Slides
 # ---------------------------------------------------------------------------
 
+def slide_divider(prs, page, total, *, kicker, title, summary):
+    """Section-divider slide announcing a chapter."""
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _bg(s, NAVY)
+
+    # accent stripe
+    stripe = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Cm(2), Cm(7.6), Cm(3.5), Cm(0.18))
+    stripe.line.fill.background()
+    stripe.fill.solid()
+    stripe.fill.fore_color.rgb = ACCENT
+
+    # kicker
+    kb = s.shapes.add_textbox(Cm(2), Cm(6.0), SLIDE_W - Cm(4), Cm(1.4))
+    _txt(kb.text_frame, kicker, size=22, bold=True, color=ACCENT)
+
+    # title
+    tb = s.shapes.add_textbox(Cm(2), Cm(8.2), SLIDE_W - Cm(4), Cm(3.0))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    r = p.add_run()
+    r.text = title
+    r.font.name = FONT
+    r.font.size = Pt(44)
+    r.font.bold = True
+    r.font.color.rgb = WHITE
+
+    # summary
+    sb = s.shapes.add_textbox(Cm(2), Cm(12.0), SLIDE_W - Cm(4), Cm(3.0))
+    tf2 = sb.text_frame
+    tf2.word_wrap = True
+    p = tf2.paragraphs[0]
+    r = p.add_run()
+    r.text = summary
+    r.font.name = FONT
+    r.font.size = Pt(18)
+    r.font.color.rgb = LIGHT
+
+    # footer with light color on navy bg
+    fb = s.shapes.add_textbox(Cm(0.8), SLIDE_H - Cm(0.9), SLIDE_W - Cm(1.6), Cm(0.7))
+    p = fb.text_frame.paragraphs[0]
+    r = p.add_run()
+    r.text = "TaskHub · защита курсовой работы"
+    r.font.name = FONT
+    r.font.size = Pt(10)
+    r.font.color.rgb = LIGHT
+
+    nb = s.shapes.add_textbox(SLIDE_W - Cm(2.5), SLIDE_H - Cm(0.9), Cm(2.0), Cm(0.7))
+    p2 = nb.text_frame.paragraphs[0]
+    p2.alignment = PP_ALIGN.RIGHT
+    r2 = p2.add_run()
+    r2.text = f"{page} / {total}"
+    r2.font.name = FONT
+    r2.font.size = Pt(10)
+    r2.font.color.rgb = LIGHT
+
+
+def slide_concept(prs, page, total):
+    """1.1 — concept of task management systems."""
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _bg(s, WHITE)
+    _header(s, "1.1. Системы управления задачами",
+            "Понятие, назначение, классификация")
+    x, y, w, h = _content_area(s)
+
+    # left: definition + functions
+    tb = s.shapes.add_textbox(x, y, w * 0.55, h)
+    tf = tb.text_frame
+    _txt(tf, "Определение", size=18, bold=True, color=NAVY)
+    p = tf.add_paragraph()
+    p.space_before = Pt(4)
+    r = p.add_run()
+    r.text = ("Система управления задачами (Issue / Task Tracking System) — программное "
+              "средство для регистрации, декомпозиции, планирования и контроля задач "
+              "проектной команды.")
+    r.font.name = FONT
+    r.font.size = Pt(15)
+    r.font.color.rgb = DARK
+
+    p2 = tf.add_paragraph()
+    p2.space_before = Pt(14)
+    r = p2.add_run()
+    r.text = "Базовые функции"
+    r.font.name = FONT
+    r.font.size = Pt(18)
+    r.font.bold = True
+    r.font.color.rgb = NAVY
+    for item in [
+        "регистрация задач, ошибок и пользовательских историй;",
+        "управление статусами и жизненным циклом задач;",
+        "приоритизация и оценка трудозатрат;",
+        "коммуникация (комментарии, уведомления, упоминания);",
+        "отчётность и метрики (burndown, velocity, lead time).",
+    ]:
+        p = tf.add_paragraph()
+        p.space_before = Pt(3)
+        r = p.add_run()
+        r.text = "•  " + item
+        r.font.name = FONT
+        r.font.size = Pt(14)
+        r.font.color.rgb = DARK
+
+    # right: classification card
+    card_x = x + w * 0.6
+    card_w = w * 0.4
+    card = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, card_x, y, card_w, h * 0.92)
+    card.line.fill.background()
+    card.fill.solid()
+    card.fill.fore_color.rgb = LIGHT
+    card.adjustments[0] = 0.05
+
+    ct = s.shapes.add_textbox(card_x + Cm(0.5), y + Cm(0.4),
+                              card_w - Cm(1.0), h * 0.92 - Cm(0.8))
+    tf2 = ct.text_frame
+    tf2.word_wrap = True
+    _txt(tf2, "Классификация", size=18, bold=True, color=ACCENT)
+    classes = [
+        ("По модели", "SaaS / on-premise / self-hosted"),
+        ("По методологии", "Kanban · Scrum · Waterfall"),
+        ("По арендности", "Single-tenant · Multi-tenant"),
+        ("По интеграции", "Standalone · DevOps-стек"),
+    ]
+    for k, v in classes:
+        p = tf2.add_paragraph()
+        p.space_before = Pt(8)
+        r = p.add_run()
+        r.text = k + ":  "
+        r.font.name = FONT
+        r.font.size = Pt(14)
+        r.font.bold = True
+        r.font.color.rgb = NAVY
+        r2 = p.add_run()
+        r2.text = v
+        r2.font.name = FONT
+        r2.font.size = Pt(14)
+        r2.font.color.rgb = DARK
+
+    _footer(s, page, total)
+
+
+def slide_uml_overview(prs, page, total):
+    """1.3 — UML 2.5 as a design tool."""
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _bg(s, WHITE)
+    _header(s, "1.3. UML 2.5 как инструмент проектирования",
+            "Унифицированный язык моделирования: 14 типов диаграмм")
+    x, y, w, h = _content_area(s)
+
+    # 2 columns: structural / behavioral
+    col_w = (w - Cm(1.0)) / 2
+    cols = [
+        ("Структурные диаграммы", NAVY, [
+            "Class — классы и связи",
+            "Component — компоненты и интерфейсы",
+            "Deployment — узлы и артефакты",
+            "Package — модульная декомпозиция",
+            "Object, Composite, Profile",
+        ]),
+        ("Поведенческие диаграммы", ACCENT, [
+            "Use Case — сценарии использования",
+            "Sequence — взаимодействие во времени",
+            "Activity — поток управления",
+            "State machine — конечный автомат",
+            "Communication, Interaction overview, Timing",
+        ]),
+    ]
+    for i, (title, color, items) in enumerate(cols):
+        cx = x + i * (col_w + Cm(0.5))
+        card = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, cx, y, col_w, h * 0.6)
+        card.line.fill.background()
+        card.fill.solid()
+        card.fill.fore_color.rgb = LIGHT
+        card.adjustments[0] = 0.05
+
+        bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, cx, y, col_w, Cm(0.7))
+        bar.line.fill.background()
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = color
+
+        tt = s.shapes.add_textbox(cx + Cm(0.3), y + Cm(0.1), col_w - Cm(0.6), Cm(0.6))
+        _txt(tt.text_frame, title, size=16, bold=True, color=WHITE)
+
+        lt = s.shapes.add_textbox(cx + Cm(0.4), y + Cm(1.1),
+                                  col_w - Cm(0.8), h * 0.6 - Cm(1.4))
+        tf = lt.text_frame
+        tf.word_wrap = True
+        for j, item in enumerate(items):
+            p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
+            r = p.add_run()
+            r.text = "•  " + item
+            r.font.name = FONT
+            r.font.size = Pt(14)
+            r.font.color.rgb = DARK
+            p.space_after = Pt(3)
+
+    # bottom callout
+    cb = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                            x, y + h * 0.65, w, h * 0.3)
+    cb.line.fill.background()
+    cb.fill.solid()
+    cb.fill.fore_color.rgb = NAVY
+    cb.adjustments[0] = 0.07
+    ct = s.shapes.add_textbox(x + Cm(0.5), y + h * 0.65 + Cm(0.3),
+                              w - Cm(1.0), h * 0.3 - Cm(0.6))
+    tf = ct.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    r = p.add_run()
+    r.text = "Для прототипа TaskHub выбраны: "
+    r.font.name = FONT
+    r.font.size = Pt(15)
+    r.font.bold = True
+    r.font.color.rgb = ACCENT
+    r2 = p.add_run()
+    r2.text = ("use case, class, ER, sequence (3 шт.), activity, state, "
+               "component, deployment, package — 11 диаграмм, покрывающих структуру и поведение системы.")
+    r2.font.name = FONT
+    r2.font.size = Pt(15)
+    r2.font.color.rgb = WHITE
+
+    _footer(s, page, total)
+
+
+def slide_requirements(prs, page, total):
+    """2.1 — functional requirements + actors via Use Case."""
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _bg(s, WHITE)
+    _header(s, "2.1. Требования к прототипу",
+            "Функциональные требования и акторы (UML Use Case)")
+    x, y, w, h = _content_area(s)
+
+    # left: requirements list
+    tb = s.shapes.add_textbox(x, y, w * 0.42, h)
+    tf = tb.text_frame
+    _txt(tf, "Функциональные требования", size=16, bold=True, color=NAVY)
+    reqs = [
+        "регистрация и аутентификация (JWT);",
+        "управление арендаторами (tenants);",
+        "проекты, доски (Kanban / Scrum), спринты;",
+        "CRUD задач, комментарии, вложения;",
+        "drag-and-drop по колонкам и спринтам;",
+        "история изменений (audit log);",
+        "полнотекстовый поиск;",
+        "уведомления и e-mail-рассылка;",
+        "REST API + WebSocket-обновления.",
+    ]
+    for item in reqs:
+        p = tf.add_paragraph()
+        p.space_before = Pt(2)
+        r = p.add_run()
+        r.text = "•  " + item
+        r.font.name = FONT
+        r.font.size = Pt(13)
+        r.font.color.rgb = DARK
+
+    # right: use case diagram
+    s.shapes.add_picture(str(PNG / "use-case.png"),
+                         x + w * 0.45, y, width=w * 0.55, height=h)
+
+    _footer(s, page, total)
+
+
+def slide_dynamics(prs, page, total):
+    """2.4 — dynamic behavior: sequence + state side by side."""
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _bg(s, WHITE)
+    _header(s, "2.4. Поведение системы",
+            "Sequence — создание задачи · State — жизненный цикл")
+    x, y, w, h = _content_area(s)
+
+    half_w = (w - Cm(0.5)) / 2
+    s.shapes.add_picture(str(PNG / "sequence-create-issue.png"),
+                         x, y, width=half_w, height=h * 0.85)
+    s.shapes.add_picture(str(PNG / "state-issue.png"),
+                         x + half_w + Cm(0.5), y, width=half_w, height=h * 0.85)
+
+    # captions
+    c1 = s.shapes.add_textbox(x, y + h * 0.86, half_w, Cm(1.0))
+    _txt(c1.text_frame,
+         "Sequence: HTTP-путь + асинхронные события (EventEmitter, WebSocket).",
+         size=12, color=GREY, align=PP_ALIGN.CENTER)
+    c2 = s.shapes.add_textbox(x + half_w + Cm(0.5), y + h * 0.86, half_w, Cm(1.0))
+    _txt(c2.text_frame,
+         "State: 6 состояний IssueStatus, переходы фиксируются в issue_changelog.",
+         size=12, color=GREY, align=PP_ALIGN.CENTER)
+
+    _footer(s, page, total)
+
+
 def slide_title(prs):
     s = prs.slides.add_slide(prs.slide_layouts[6])  # blank
     _bg(s, LIGHT)
@@ -668,81 +957,51 @@ def build():
     prs.slide_height = SLIDE_H
 
     # 15 slides total (within the requested 10-15 range).
+    # Structure mirrors the coursework: Введение → Глава 1 (теоретическая
+    # часть) → Глава 2 (практическая часть) → Заключение.
     TOTAL = 15
 
-    slide_title(prs)
-    slide_relevance(prs, 2, TOTAL)
-    slide_goal(prs, 3, TOTAL)
-    slide_object_methods(prs, 4, TOTAL)
-    slide_compare(prs, 5, TOTAL)
-    slide_architecture_text(prs, 6, TOTAL)
+    # — Введение —
+    slide_title(prs)                                           # 1
+    slide_relevance(prs, 2, TOTAL)                             # 2
+    slide_goal(prs, 3, TOTAL)                                  # 3
 
-    slide_diagram(prs, 7, TOTAL,
-                  title="UML: Use Case",
-                  subtitle="Акторы и сценарии использования системы",
-                  png=PNG / "use-case.png",
-                  bullets=[
-                      "4 актора: Administrator, Project Manager, Developer, Viewer.",
-                      "14 сценариев — от регистрации до управления задачами и поиска.",
-                      "Связи include / extend моделируют обязательные и опциональные расширения сценариев.",
-                      "Диаграмма зафиксировала функциональные требования к прототипу.",
-                  ])
+    # — Глава 1. Теоретическая часть —
+    slide_divider(prs, 4, TOTAL,                               # 4
+                  kicker="ГЛАВА 1",
+                  title="Теоретическая часть",
+                  summary=("Понятие систем управления задачами, анализ "
+                           "аналогов, обоснование выбора UML 2.5 и "
+                           "технологического стека прототипа."))
+    slide_concept(prs, 5, TOTAL)                               # 5  · 1.1
+    slide_compare(prs, 6, TOTAL)                               # 6  · 1.2
+    slide_uml_overview(prs, 7, TOTAL)                          # 7  · 1.3
+    slide_tech(prs, 8, TOTAL)                                  # 8  · 1.4
 
-    slide_diagram(prs, 8, TOTAL,
-                  title="UML: Class diagram",
-                  subtitle="Доменная модель TaskHub",
+    # — Глава 2. Практическая часть —
+    slide_divider(prs, 9, TOTAL,                               # 9
+                  kicker="ГЛАВА 2",
+                  title="Практическая часть",
+                  summary=("Разработка прототипа TaskHub: требования, "
+                           "архитектура, модель данных, поведение системы "
+                           "и развёртывание."))
+    slide_requirements(prs, 10, TOTAL)                         # 10 · 2.1 (Use Case)
+    slide_architecture_text(prs, 11, TOTAL)                    # 11 · 2.2 (Component)
+    slide_diagram(prs, 12, TOTAL,                              # 12 · 2.3 (Class)
+                  title="2.3. Доменная модель (UML Class)",
+                  subtitle="11 сущностей и 5 перечислений TaskHub",
                   png=PNG / "class.png",
                   bullets=[
-                      "11 ключевых сущностей: Tenant, User, Project, Sprint, Issue, …",
-                      "5 перечислений: UserRole, IssueStatus, IssuePriority, SprintStatus, BoardType.",
-                      "Композиция Tenant → Project → Issue моделирует владение данными.",
-                      "Класс служит шаблоном TypeORM-сущностей в коде backend.",
+                      "Tenant, User, Project, Sprint, Issue, Comment, Attachment …",
+                      "Перечисления: UserRole, IssueStatus, IssuePriority, BoardType.",
+                      "Композиция Tenant → Project → Issue фиксирует владение.",
+                      "Соответствует TypeORM-сущностям backend-модулей.",
                   ])
+    slide_db(prs, 13, TOTAL)                                   # 13 · 2.4 (ER + RLS)
+    slide_dynamics(prs, 14, TOTAL)                             # 14 · 2.5 (Sequence + State)
 
-    slide_db(prs, 9, TOTAL)
-
-    slide_diagram(prs, 10, TOTAL,
-                  title="UML: Sequence — создание задачи",
-                  subtitle="Синхронный путь HTTP + асинхронные события",
-                  png=PNG / "sequence-create-issue.png",
-                  bullets=[
-                      "Web-клиент → Controller → Service → Repository → PostgreSQL.",
-                      "Транзакция вставки задачи и записи в issue_changelog.",
-                      "EventEmitter публикует issue.created для подписчиков.",
-                      "WebSocket-шлюз и Notifications обрабатывают событие асинхронно.",
-                  ])
-
-    slide_diagram(prs, 11, TOTAL,
-                  title="UML: State — жизненный цикл задачи",
-                  subtitle="Конечный автомат IssueStatus",
-                  png=PNG / "state-issue.png",
-                  bullets=[
-                      "6 состояний: BACKLOG → TODO → IN_PROGRESS → IN_REVIEW → DONE / CANCELLED.",
-                      "Каждый переход — действие в API (start, submitForReview, approve, reject, …).",
-                      "Защита от недопустимых переходов на уровне сервисного слоя.",
-                      "Все переходы попадают в issue_changelog для аудита.",
-                  ])
-
-    slide_diagram(prs, 12, TOTAL,
-                  title="UML: Deployment",
-                  subtitle="Топология контейнеров Docker Compose",
-                  png=PNG / "deployment.png",
-                  bullets=[
-                      "7 контейнеров: traefik, web, api, postgres, redis, minio, adminer.",
-                      "Traefik принимает HTTPS, маршрутизирует / в SPA, /api в NestJS.",
-                      "Состояние БД и MinIO смонтировано через volumes.",
-                      "Конфигурация описана в инфраструктурных файлах репозитория.",
-                  ])
-
-    slide_tech(prs, 13, TOTAL)
-    slide_results(prs, 14, TOTAL)
-    slide_conclusion(prs, 15, TOTAL)
-    # The "thanks" slide intentionally is the last one — adjust totals at runtime
-    # if we want it numbered. We'll re-render with TOTAL = number of slides.
-
-    # Recompute total and rebuild numbering via slide notes? Simpler: we already
-    # rendered footers with TOTAL=14, and we have 14 content slides + thanks =>
-    # we omit the thanks slide and stop at conclusion to stay within 10-15.
+    # — Заключение —
+    slide_conclusion(prs, 15, TOTAL)                           # 15
 
     prs.save(OUT)
     print(f"Saved: {OUT}  ({OUT.stat().st_size / 1024:.0f} KB)")
