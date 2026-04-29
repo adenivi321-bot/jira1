@@ -244,10 +244,10 @@ def slide_concept(prs, page, total):
     tf2.word_wrap = True
     _txt(tf2, "Классификация", size=18, bold=True, color=ACCENT)
     classes = [
-        ("По модели", "SaaS / on-premise / self-hosted"),
+        ("По модели", "SaaS · on-premise · self-hosted"),
         ("По методологии", "Kanban · Scrum · Waterfall"),
         ("По арендности", "Single-tenant · Multi-tenant"),
-        ("По интеграции", "Standalone · DevOps-стек"),
+        ("Монетизация", "Free · Freemium · Subscription"),
     ]
     for k, v in classes:
         p = tf2.add_paragraph()
@@ -496,9 +496,9 @@ def slide_relevance(prs, page, total):
     tb = s.shapes.add_textbox(x, y, w * 0.55, h)
     _add_bullets(tb.text_frame, [
         "Распределённые команды требуют единой среды для планирования и контроля задач.",
-        "Облачные сервисы (Jira, Asana, Linear) — vendor lock-in, рост стоимости лицензий, требования к локализации данных.",
-        "Тренд на self-hosted решения с поддержкой multi-tenant изоляции.",
-        "Современный стек (NestJS, React, PostgreSQL) делает разработку прототипа реалистичной задачей курсовой работы.",
+        "Зарубежные SaaS (Jira, Asana, Linear) — vendor lock-in, рост стоимости лицензий, требования к локализации данных и платежам.",
+        "B2B-SaaS как продуктовая модель: multi-tenant изоляция + тарифные планы + интеграция с локальной платёжной системой.",
+        "Современный стек (NestJS, React, PostgreSQL) делает разработку такого прототипа реалистичной задачей курсовой работы.",
     ], size=18)
 
     # right: stats card
@@ -516,8 +516,8 @@ def slide_relevance(prs, page, total):
     items = [
         ("85%+", "команд используют ≥1 системы трекинга"),
         ("11", "типов UML-диаграмм в стандарте 2.5"),
-        ("multi-tenant", "ключевое требование к B2B-SaaS"),
-        ("RLS", "механизм изоляции в PostgreSQL"),
+        ("4 тарифа", "FREE · BASIC · PRO · ENTERPRISE"),
+        ("RLS", "механизм изоляции арендаторов в PostgreSQL"),
     ]
     for i, (big, small) in enumerate(items):
         if i == 0:
@@ -649,14 +649,14 @@ def slide_compare(prs, page, total):
     _header(s, "Сравнение существующих решений", "Анализ аналогов задал требования к прототипу TaskHub")
     x, y, w, h = _content_area(s)
 
-    headers = ["Система", "Self-hosted", "Multi-tenant", "Открытый код", "Гибкость WF"]
+    headers = ["Система", "Поставка", "Multi-tenant", "Тарифы", "Гибкость WF"]
     rows = [
-        ["Atlassian Jira",  "DC (платно)", "Нет",   "Нет", "Высокая"],
-        ["GitHub Projects", "SaaS",        "Нет",   "Нет", "Средняя"],
-        ["Asana / Trello",  "SaaS",        "Нет",   "Нет", "Низкая"],
-        ["YouTrack",        "Да",          "Огранич.", "Нет", "Высокая"],
-        ["OpenProject",     "Да",          "Нет",   "Да",  "Средняя"],
-        ["TaskHub (proto)", "Да",          "Да (RLS)", "Да", "Высокая"],
+        ["Atlassian Jira",  "Cloud + DC",   "Нет",      "Per-user",          "Высокая"],
+        ["GitHub Projects", "SaaS",         "Нет",      "С GitHub",          "Средняя"],
+        ["Asana / Trello",  "SaaS",         "Нет",      "Free / Premium",    "Низкая"],
+        ["YouTrack",        "Cloud + on-prem", "Огранич.", "Per-user",       "Высокая"],
+        ["OpenProject",     "On-prem",      "Нет",      "Community / Ent.",  "Средняя"],
+        ["TaskHub (proto)", "On-prem (Docker)", "Да (RLS)", "4 плана + YooKassa", "Высокая"],
     ]
 
     rows_n = len(rows) + 1
@@ -743,11 +743,12 @@ def slide_architecture_text(prs, page, total):
     tb = s.shapes.add_textbox(x, y, w * 0.5, h)
     _add_bullets(tb.text_frame, [
         "Frontend: React 18 + Vite + TanStack Query + Zustand.",
-        "Backend: NestJS + TypeORM, 9 модулей (Auth, Tenants, Users, Projects, Issues, Search, Notifications, Mail, Health).",
+        "Backend: NestJS + TypeORM, 10 модулей (Auth, Tenants, Users, Projects, Issues, Search, Notifications, Health, Billing, Redis).",
         "Хранилища: PostgreSQL 16 (RLS), Redis (кеш и pub/sub), MinIO (вложения).",
+        "Биллинг: YooKassa-интеграция + PlanGuard, ограничения по тарифам (projects/users/issues).",
         "Реал-тайм: WebSocket (Socket.IO) + EventEmitter для развязки слоёв.",
         "Развёртывание: Docker Compose, обратный прокси Traefik.",
-    ], size=17)
+    ], size=15)
 
     # right: component diagram
     s.shapes.add_picture(str(PNG / "component.png"),
